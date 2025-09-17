@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Credit Card - Debt Payoff Planner{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="fas fa-edit"></i> Edit Credit Card: {{ card.name }}
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Card Name *</label>
+                        <input type="text" class="form-control" id="name" name="name" 
+                               value="{{ card.name }}" required>
+                        <div class="form-text">Give this card a recognizable name</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="balance" class="form-label">Current Balance *</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" id="balance" name="balance" 
+                                   step="0.01" min="0" value="{{ card.balance }}" required>
+                        </div>
+                        <div class="form-text">Enter the current outstanding balance</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="apr" class="form-label">Annual Percentage Rate (APR) *</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="apr" name="apr" 
+                                   step="0.01" min="0" max="50" value="{{ card.apr }}" required>
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <div class="form-text">The interest rate for this card</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="minimum_payment" class="form-label">Minimum Monthly Payment *</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" id="minimum_payment" name="minimum_payment" 
+                                   step="0.01" min="0" value="{{ card.minimum_payment }}" required>
+                        </div>
+                        <div class="form-text">The minimum amount required each month</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary me-md-2">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Update Credit Card
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
