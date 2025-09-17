@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block title %}Payoff Plan - Debt Payoff Planner{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">Your Debt Payoff Plan</h1>
+    </div>
+</div>
+
+<!-- Extra Payment Input -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Calculate with Extra Payment</h5>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number" class="form-control" id="extraPayment" 
+                           step="0.01" min="0" value="0" placeholder="0.00">
+                    <button class="btn btn-primary" id="recalculate">
+                        <i class="fas fa-calculator"></i> Recalculate
+                    </button>
+                </div>
+                <div class="form-text">Enter any extra amount you can pay monthly</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Method Comparison -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-snowflake"></i> Debt Snowball Method
+                </h5>
+                <small>Pay smallest balances first (psychological wins)</small>
+            </div>
+            <div class="card-body" id="snowball-summary">
+                <div class="row">
+                    <div class="col-6">
+                        <h6 class="text-muted">Total Interest</h6>
+                        <h4 class="text-danger">${{ "%.2f"|format(snowball_plan.total_interest) }}</h4>
+                    </div>
+                    <div class="col-6">
+                        <h6 class="text-muted">Payoff Time</h6>
+                        <h4 class="text-info">{{ snowball_plan.payoff_time_years }} years</h4>
+                    </div>
+                </div>
+                <p class="mb-0"><strong>Strategy:</strong> Focus extra payments on the card with the smallest balance while paying minimums on others.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-mountain"></i> Debt Avalanche Method
+                </h5>
+                <small>Pay highest interest rates first (saves money)</small>
+            </div>
+            <div class="card-body" id="avalanche-summary">
+                <div class="row">
+                    <div class="col-6">
+                        <h6 class="text-muted">Total Interest</h6>
+                        <h4 class="text-danger">${{ "%.2f"|format(avalanche_plan.total_interest) }}</h4>
+                    </div>
+                    <div class="col-6">
+                        <h6 class="text-muted">Payoff Time</h6>
+                        <h4 class="text-info">{{ avalanche_plan.payoff_time_years }} years</h4>
+                    </div>
+                </div>
+                <p class="mb-0"><strong>Strategy:</strong> Focus extra payments on the card with the highest APR while paying minimums on others.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Plans -->
+<div class="row">
+    <div class="col-12">
+        <ul class="nav nav-tabs" id="planTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="snowball-tab" data-bs-toggle="tab" 
+                        data-bs-target="#snowball" type="button" role="tab">
+                    <i class="fas fa-snowflake"></i> Snowball Method Details
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="avalanche-tab" data-bs-toggle="tab" 
+                        data-bs-target="#avalanche" type="button" role="tab">
+                    <i class="fas fa-mountain"></i> Avalanche Method Details
+                </button>
+            </li>
+        </ul>
+        
+        <div class="tab-content" id="planTabsContent">
+            <!-- Snowball Method Details -->
+            <div class="tab-pane fade show active" id="snowball" role="tabpanel">
+                <div class="card">
+                    <div class="card-body">
+                        <h5>Payment Order (Snowball Method)</h5>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Order</th>
+                                        <th>Card Name</th>
+                                        <th>Balance</th>
+                                        <th>APR</th>
+                                        <th>Min Payment</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for card in snowball_plan.cards %}
+                                    <tr>
+                                        <td>{{ loop.index }}</td>
+                                        <td>{{ card.name }}</td>
+                                        <td>${{ "%.2f"|format(card.original_balance) }}</td>
+                                        <td>{{ "%.2f"|format(card.apr) }}%</td>
+                                        <td>${{ "%.2f"|format(card.minimum_payment) }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        {% if snowball_plan.monthly_payments %}
+                        <h6 class="mt-4">First 12 Months Payment Schedule</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Month</th>
+                                        <th>Total Payment</th>
+                                        <th>Interest Paid</th>
+                                        <th>Progress</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for month in snowball_plan.monthly_payments %}
+                                    <tr>
+                                        <td>{{ month.month }}</td>
+                                        <td>${{ "%.2f"|format(month.total_payment) }}</td>
+                                        <td>${{ "%.2f"|format(month.total_interest) }}</td>
+                                        <td>
+                                            {% for card in month.cards %}
+                                                <small class="d-block">{{ card.name }}: ${{ "%.2f"|format(card.remaining_balance) }}</small>
+                                            {% endfor %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Avalanche Method Details -->
+            <div class="tab-pane fade" id="avalanche" role="tabpanel">
+                <div class="card">
+                    <div class="card-body">
+                        <h5>Payment Order (Avalanche Method)</h5>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Order</th>
+                                        <th>Card Name</th>
+                                        <th>Balance</th>
+                                        <th>APR</th>
+                                        <th>Min Payment</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for card in avalanche_plan.cards %}
+                                    <tr>
+                                        <td>{{ loop.index }}</td>
+                                        <td>{{ card.name }}</td>
+                                        <td>${{ "%.2f"|format(card.original_balance) }}</td>
+                                        <td>{{ "%.2f"|format(card.apr) }}%</td>
+                                        <td>${{ "%.2f"|format(card.minimum_payment) }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        {% if avalanche_plan.monthly_payments %}
+                        <h6 class="mt-4">First 12 Months Payment Schedule</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Month</th>
+                                        <th>Total Payment</th>
+                                        <th>Interest Paid</th>
+                                        <th>Progress</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for month in avalanche_plan.monthly_payments %}
+                                    <tr>
+                                        <td>{{ month.month }}</td>
+                                        <td>${{ "%.2f"|format(month.total_payment) }}</td>
+                                        <td>${{ "%.2f"|format(month.total_interest) }}</td>
+                                        <td>
+                                            {% for card in month.cards %}
+                                                <small class="d-block">{{ card.name }}: ${{ "%.2f"|format(card.remaining_balance) }}</small>
+                                            {% endfor %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('recalculate').addEventListener('click', function() {
+    const extraPayment = document.getElementById('extraPayment').value;
+    
+    fetch('/api/payoff_calculation', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            extra_payment: parseFloat(extraPayment) || 0
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Update snowball summary
+        document.querySelector('#snowball-summary .text-danger').textContent = 
+            '$' + data.snowball.total_interest.toFixed(2);
+        document.querySelector('#snowball-summary .text-info').textContent = 
+            data.snowball.payoff_time_years + ' years';
+        
+        // Update avalanche summary
+        document.querySelector('#avalanche-summary .text-danger').textContent = 
+            '$' + data.avalanche.total_interest.toFixed(2);
+        document.querySelector('#avalanche-summary .text-info').textContent = 
+            data.avalanche.payoff_time_years + ' years';
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error calculating payoff plan. Please try again.');
+    });
+});
+</script>
+{% endblock %}
